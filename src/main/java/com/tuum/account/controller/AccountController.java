@@ -1,15 +1,19 @@
 package com.tuum.account.controller;
 
-import com.tuum.account.dto.AccountDto;
 import com.tuum.account.domain.Account;
+import com.tuum.account.domain.Balance;
+import com.tuum.account.dto.AccountDto;
+import com.tuum.account.dto.BalanceDto;
 import com.tuum.account.dto.CreateAccountRequest;
+import com.tuum.account.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.tuum.account.service.AccountService;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/accounts")
@@ -37,9 +41,21 @@ public class AccountController {
     }
 
     private AccountDto mapAccountToDto(Account account) {
+        List<BalanceDto> balances = account.getBalances().stream()
+                .map(this::mapBalanceToDto)
+                .collect(Collectors.toList());
+
         return AccountDto.builder()
                 .id(account.getId())
                 .customerId(account.getCustomerId())
+                .balances(balances)
+                .build();
+    }
+
+    private BalanceDto mapBalanceToDto(Balance balance) {
+        return BalanceDto.builder()
+                .availableAmount(balance.getAvailableAmount())
+                .currency(balance.getCurrencyCode())
                 .build();
     }
 

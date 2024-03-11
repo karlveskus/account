@@ -4,4 +4,5 @@ public enum ErrorCode {
     INVALID_REQUEST,
     UNEXPECTED,
     ACCOUNT_NOT_FOUND,
+    CURRENCY_NOT_ALLOWED
 }

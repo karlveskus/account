@@ -30,3 +30,5 @@ spring:
     enabled: true
 
 mybatis.type-handlers-package: com.tuum.account.typehandler
+
+currencies.enabled: EUR,SEK,GBP,USD

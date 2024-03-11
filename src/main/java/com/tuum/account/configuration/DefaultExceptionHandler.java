@@ -2,7 +2,9 @@ package com.tuum.account.configuration;
 
 import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.dto.ErrorMessageResponse;
+import com.tuum.account.exception.BadRequestException;
 import com.tuum.account.exception.NotFoundException;
+import com.tuum.account.exception.TuumException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,16 +24,23 @@ import java.util.Map;
 @Slf4j
 public class DefaultExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(value = { NotFoundException.class })
-    protected ResponseEntity<ErrorMessageResponse> handleException(NotFoundException e) {
+    @ExceptionHandler(value = { TuumException.class})
+    protected ResponseEntity<ErrorMessageResponse> handleException(TuumException e) {
         log.info(e.getMessage(), e);
 
         ErrorMessageResponse response = ErrorMessageResponse.builder()
                 .errorCode(e.getErrorCode())
                 .build();
 
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        if (e instanceof NotFoundException) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (e instanceof BadRequestException) {
+            status = HttpStatus.BAD_REQUEST;
+        }
+
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(status)
                 .body(response);
     }
 

@@ -2,6 +2,7 @@ package com.tuum.account.domain;
 
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -17,5 +18,7 @@ public class Account {
     private UUID customerId;
 
     private String country;
+
+    private List<Balance> balances;
 
 }
