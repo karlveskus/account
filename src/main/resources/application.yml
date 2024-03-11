@@ -1,0 +1,32 @@
+spring:
+  jackson:
+    default-property-inclusion: non_null
+  datasource:
+    url: jdbc:postgresql://localhost:5432/account
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximumPoolSize: 5
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: false
+        temp.use_jdbc_metadata_defaults: false
+        id.new_generator_mappings: true
+        cache.use_second_level_cache: false
+        cache.use_query_cache: false
+        generate_statistics: false
+
+  flyway:
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    enabled: true
+
+mybatis.type-handlers-package: com.tuum.account.typehandler
