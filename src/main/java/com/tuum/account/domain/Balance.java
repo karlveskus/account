@@ -1,5 +1,6 @@
 package com.tuum.account.domain;
 
+import com.tuum.account.service.BigDecimalUtils;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -18,14 +19,26 @@ public class Balance {
 
     private UUID accountId;
 
-    private Long availableAmount;
+    private Long availableAmountCents;
 
     private String currencyCode;
 
     public BigDecimal getAvailableAmount() {
         int scale = Currency.getInstance(currencyCode).getDefaultFractionDigits();
 
-        return BigDecimal.valueOf(availableAmount, scale);
+        return BigDecimal.valueOf(availableAmountCents, scale);
+    }
+
+    public void setAvailableAmount(BigDecimal amount) {
+        this.availableAmountCents = BigDecimalUtils.convertBigDecimalToLong(amount);
+    }
+
+    public static class BalanceBuilder {
+        public BalanceBuilder availableAmount(BigDecimal amount) {
+            this.availableAmountCents = BigDecimalUtils.convertBigDecimalToLong(amount);
+
+            return this;
+        }
     }
 
 }

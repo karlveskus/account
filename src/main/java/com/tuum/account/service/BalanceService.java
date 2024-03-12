@@ -1,12 +1,15 @@
 package com.tuum.account.service;
 
 import com.tuum.account.domain.Balance;
+import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.exception.BadRequestException;
+import com.tuum.account.exception.NotFoundException;
 import com.tuum.account.mapper.BalanceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,7 +32,7 @@ public class BalanceService {
 
         Balance balance = Balance.builder()
                 .accountId(accountId)
-                .availableAmount(0L)
+                .availableAmount(BigDecimal.ZERO)
                 .currencyCode(currencyCode)
                 .build();
 
@@ -46,5 +49,23 @@ public class BalanceService {
 
     public List<Balance> getBalancesByAccountId(UUID accountId) {
         return balanceMapper.getBalancesByAccountId(accountId);
+    }
+
+    public Balance getBalanceByAccountIdAndCurrency(UUID accountId, String currency) {
+        if (!enabledCurrencies.contains(currency)) {
+            throw new BadRequestException(CURRENCY_NOT_ALLOWED, "Currency code " + currency + " not allowed");
+        }
+
+        Balance balance = balanceMapper.getBalanceByAccountIdAndCurrency(accountId, currency);
+
+        if (balance == null) {
+            throw new NotFoundException(ErrorCode.BALANCE_NOT_FOUND, "Account " + accountId + " has no balance with currency " + currency);
+        }
+
+        return balance;
+    }
+
+    public void updateBalance(Balance balance) {
+        balanceMapper.update(balance);
     }
 }

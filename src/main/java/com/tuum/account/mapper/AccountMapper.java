@@ -15,7 +15,7 @@ public interface AccountMapper {
     })
     Account getAccount(@Param("id") UUID id);
 
-    @Insert("INSERT INTO account (id, created_at, updated_at, customer_id, country) VALUES (#{id}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, #{customerId}, #{country})")
+    @Insert("INSERT INTO account (id, customer_id, country) VALUES (#{id}, #{customerId}, #{country})")
     void insert(Account account);
 
 }
