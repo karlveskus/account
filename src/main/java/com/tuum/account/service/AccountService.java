@@ -22,10 +22,7 @@ public class AccountService {
 
     @Transactional
     public Account createAccount(CreateAccountRequest createAccountRequest) {
-        Account account = Account.builder()
-                .customerId(UUID.fromString(createAccountRequest.customerId()))
-                .country(createAccountRequest.country())
-                .build();
+        Account account = composeAccount(createAccountRequest);
 
         accountMapper.insert(account);
 
@@ -46,5 +43,12 @@ public class AccountService {
         account.setBalances(balanceService.getBalancesByAccountId(account.getId()));
 
         return account;
+    }
+
+    private Account composeAccount(CreateAccountRequest createAccountRequest) {
+        return Account.builder()
+                .customerId(UUID.fromString(createAccountRequest.customerId()))
+                .country(createAccountRequest.country())
+                .build();
     }
 }

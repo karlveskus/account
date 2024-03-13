@@ -1,17 +1,16 @@
 package com.tuum.account.controller;
 
 import com.tuum.account.domain.TransactionDirection;
-import com.tuum.account.dto.AccountDto;
-import com.tuum.account.dto.ErrorMessageResponse;
-import com.tuum.account.dto.TransactionResult;
+import com.tuum.account.dto.*;
 import com.tuum.account.dto.enumeration.ErrorCode;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class TransactionControllerTest extends IntegrationTestBase {
@@ -192,6 +191,45 @@ public class TransactionControllerTest extends IntegrationTestBase {
         ErrorMessageResponse response = objectMapper.readValue(responseAsString, ErrorMessageResponse.class);
 
         assertThat(response.errorCode()).isEqualTo(ErrorCode.ACCOUNT_NOT_FOUND);
+    }
+
+    @Test
+    void getTransactions() throws Exception {
+        AccountDto accountDto = createAccountAndReturn(UUID.randomUUID().toString(), List.of("EUR", "USD"));
+
+        BigDecimal amountIn = new BigDecimal("20.00");
+        BigDecimal amountOut = new BigDecimal("10.00");
+        String currency = "EUR";
+
+        createTransactionAndReturn(accountDto.id().toString(), amountIn, currency, TransactionDirection.IN, "Transaction In");
+        createTransactionAndReturn(accountDto.id().toString(), amountOut, currency, TransactionDirection.OUT, "Transaction Out");
+
+        TransactionsResponse response = getTransactionsAndReturn(accountDto.id());
+
+        assertThat(response.transactions()).extracting(
+                TransactionDto::direction,
+                TransactionDto::amount
+        ).containsExactlyInAnyOrder(
+                Tuple.tuple(TransactionDirection.IN, amountIn),
+                Tuple.tuple(TransactionDirection.OUT, amountOut)
+        );
+    }
+
+    @Test
+    void getTransactions_NoTransactions() throws Exception {
+        AccountDto accountDto = createAccountAndReturn(UUID.randomUUID().toString(), List.of("EUR", "USD"));
+
+        TransactionsResponse response = getTransactionsAndReturn(accountDto.id());
+
+        assertThat(response.transactions()).isEmpty();
+    }
+
+    @Test
+    void getTransactions_AccountNotFound() throws Exception {
+        UUID accountId = UUID.randomUUID();
+
+        getTransactions(accountId)
+                .andExpect(status().isNotFound());
     }
 
 }

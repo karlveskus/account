@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,22 +26,26 @@ public class TransactionService {
     private final AccountService accountService;
 
     @Transactional
-    public TransactionResult createTransaction(CreateTransactionRequest request) {
-        Account account = accountService.getAccount(UUID.fromString(request.accountId()));
+    public TransactionResult createTransaction(UUID accountId, CreateTransactionRequest request) {
+        Account account = accountService.getAccount(accountId);
         Balance balance = balanceService.getBalanceByAccountIdAndCurrency(account.getId(), request.currency());
 
         validateTransactionAmount(request.amount());
-        validateSufficientFunds(request.direction(), balance, request.amount());
+        validateSufficientFunds(balance, request.amount(), request.direction());
 
-        BigDecimal newBalance = calculateNewBalance(request, balance);
-
+        BigDecimal newBalance = calculateNewBalance(balance, request.amount(), request.direction());
         updateBalance(balance, newBalance);
 
-        Transaction transaction = composeTransaction(request);
-
+        Transaction transaction = composeTransaction(accountId, request);
         insertTransaction(transaction);
 
-        return buildTransactionResult(request, newBalance, transaction.getId());
+        return buildTransactionResult(request, accountId, newBalance, transaction.getId());
+    }
+
+    public List<Transaction> getTransactions(UUID accountId) {
+        Account account = accountService.getAccount(accountId);
+
+        return transactionMapper.getTransactionsByAccountId(account.getId());
     }
 
     private void validateTransactionAmount(BigDecimal amount) {
@@ -49,7 +54,7 @@ public class TransactionService {
         }
     }
 
-    private void validateSufficientFunds(TransactionDirection direction, Balance balance, BigDecimal transactionAmount) {
+    private void validateSufficientFunds(Balance balance, BigDecimal transactionAmount, TransactionDirection direction) {
         if (isInsufficientFunds(direction, balance, transactionAmount)) {
             throw new BadRequestException(ErrorCode.INSUFFICIENT_FUNDS, "Insufficient funds");
         }
@@ -64,11 +69,11 @@ public class TransactionService {
         return amount.compareTo(BigDecimal.ZERO) < 0;
     }
 
-    private BigDecimal calculateNewBalance(CreateTransactionRequest request, Balance balance) {
-        if (request.direction().equals(TransactionDirection.IN)) {
-            return balance.getAvailableAmount().add(request.amount());
+    private BigDecimal calculateNewBalance(Balance balance, BigDecimal transactionAmount, TransactionDirection direction) {
+        if (direction.equals(TransactionDirection.IN)) {
+            return balance.getAvailableAmount().add(transactionAmount);
         } else {
-            return balance.getAvailableAmount().subtract(request.amount());
+            return balance.getAvailableAmount().subtract(transactionAmount);
         }
     }
 
@@ -77,10 +82,11 @@ public class TransactionService {
         balanceService.updateBalance(balance);
     }
 
-    private Transaction composeTransaction(CreateTransactionRequest request) {
+    private Transaction composeTransaction(UUID accountId, CreateTransactionRequest request) {
         return Transaction.builder()
-                .accountId(UUID.fromString(request.accountId()))
+                .accountId(accountId)
                 .amount(request.amount())
+                .currencyCode(request.currency())
                 .direction(request.direction())
                 .description(request.description())
                 .build();
@@ -90,9 +96,9 @@ public class TransactionService {
         transactionMapper.insert(transaction);
     }
 
-    private TransactionResult buildTransactionResult(CreateTransactionRequest request, BigDecimal newBalance, UUID transactionId) {
+    private TransactionResult buildTransactionResult(CreateTransactionRequest request, UUID accountId, BigDecimal newBalance, UUID transactionId) {
         return TransactionResult.builder()
-                .accountId(UUID.fromString(request.accountId()))
+                .accountId(accountId)
                 .transactionID(transactionId)
                 .amount(request.amount())
                 .currency(request.currency())

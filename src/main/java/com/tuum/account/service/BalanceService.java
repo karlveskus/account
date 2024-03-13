@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.tuum.account.dto.enumeration.ErrorCode.CURRENCY_NOT_ALLOWED;
-
 @Service
 @RequiredArgsConstructor
 public class BalanceService {
+
+    private static final BigDecimal INITIAL_BALANCE = BigDecimal.ZERO;
 
     @Value("#{'${currencies.enabled}'.split(',')}")
     private List<String> enabledCurrencies;
@@ -26,16 +26,9 @@ public class BalanceService {
     private final BalanceMapper balanceMapper;
 
     public Balance initializeBalance(UUID accountId, String currencyCode) {
-        if (!enabledCurrencies.contains(currencyCode)) {
-            throw new BadRequestException(CURRENCY_NOT_ALLOWED, "Currency code " + currencyCode + " not allowed");
-        }
+        validateCurrency(currencyCode);
 
-        Balance balance = Balance.builder()
-                .accountId(accountId)
-                .availableAmount(BigDecimal.ZERO)
-                .currencyCode(currencyCode)
-                .build();
-
+        Balance balance = composeInitialBalance(accountId, currencyCode);
         balanceMapper.insert(balance);
 
         return balance;
@@ -43,7 +36,7 @@ public class BalanceService {
 
     public List<Balance> initializeBalances(UUID accountId, List<String> currencies) {
         return currencies.stream()
-                .map((currency) -> initializeBalance(accountId, currency))
+                .map(currency -> initializeBalance(accountId, currency))
                 .collect(Collectors.toList());
     }
 
@@ -52,9 +45,7 @@ public class BalanceService {
     }
 
     public Balance getBalanceByAccountIdAndCurrency(UUID accountId, String currency) {
-        if (!enabledCurrencies.contains(currency)) {
-            throw new BadRequestException(CURRENCY_NOT_ALLOWED, "Currency code " + currency + " not allowed");
-        }
+        validateCurrency(currency);
 
         Balance balance = balanceMapper.getBalanceByAccountIdAndCurrency(accountId, currency);
 
@@ -68,4 +59,19 @@ public class BalanceService {
     public void updateBalance(Balance balance) {
         balanceMapper.update(balance);
     }
+
+    private void validateCurrency(String currencyCode) {
+        if (!enabledCurrencies.contains(currencyCode)) {
+            throw new BadRequestException(ErrorCode.CURRENCY_NOT_ALLOWED, "Currency code " + currencyCode + " not allowed");
+        }
+    }
+
+    private Balance composeInitialBalance(UUID accountId, String currencyCode) {
+        return Balance.builder()
+                .accountId(accountId)
+                .availableAmount(INITIAL_BALANCE)
+                .currencyCode(currencyCode)
+                .build();
+    }
+
 }

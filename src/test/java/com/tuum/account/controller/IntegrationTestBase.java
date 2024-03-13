@@ -2,10 +2,7 @@ package com.tuum.account.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.account.domain.TransactionDirection;
-import com.tuum.account.dto.AccountDto;
-import com.tuum.account.dto.CreateAccountRequest;
-import com.tuum.account.dto.CreateTransactionRequest;
-import com.tuum.account.dto.TransactionResult;
+import com.tuum.account.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -91,7 +88,6 @@ public abstract class IntegrationTestBase {
 
     ResultActions createTransaction(String accountId, BigDecimal amount, String currency, TransactionDirection direction, String description) throws Exception {
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-                .accountId(accountId)
                 .amount(amount)
                 .currency(currency)
                 .direction(direction)
@@ -99,9 +95,25 @@ public abstract class IntegrationTestBase {
                 .build();
 
         return mockMvc.perform(
-                post("/v1/transactions")
+                post("/v1/account/" + accountId.toString() + "/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)));
+    }
+
+    TransactionsResponse getTransactionsAndReturn(UUID accountId) throws Exception {
+        String responseAsString = getTransactions(accountId)
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readValue(responseAsString, TransactionsResponse.class);
+    }
+
+    ResultActions getTransactions(UUID accountId) throws Exception {
+        return mockMvc.perform(
+                get("/v1/account/" + accountId + "/transactions")
+                        .contentType(MediaType.APPLICATION_JSON));
     }
 }
 

@@ -31,8 +31,8 @@ public interface BalanceMapper {
     })
     Balance getBalanceByAccountIdAndCurrency(@Param("accountId") UUID accountId, @Param("currencyCode") String currencyCode);
 
-    @Insert("INSERT INTO " +
-            "balance (id, account_id, available_amount_cents, currency_code) " +
+    @Insert("INSERT INTO balance " +
+            "(id, account_id, available_amount_cents, currency_code) " +
             "VALUES (#{id}, #{accountId}, #{availableAmountCents}, #{currencyCode})")
     void insert(Balance balance);
 

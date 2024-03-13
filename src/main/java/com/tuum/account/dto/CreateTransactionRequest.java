@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 @Builder
 public record CreateTransactionRequest(
 
-        @NotNull
-        @ValidUUID(message = "invalid value")
-        String accountId,
+//        @NotNull
+//        @ValidUUID(message = "invalid value")
+//        String accountId,
 
         @NotNull
         BigDecimal amount,

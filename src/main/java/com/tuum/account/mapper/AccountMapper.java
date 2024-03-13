@@ -8,14 +8,18 @@ import java.util.UUID;
 @Mapper
 public interface AccountMapper {
 
-    @Select("SELECT id, customer_id FROM account WHERE id=#{id}")
+    @Select("SELECT id, customer_id " +
+            "FROM account " +
+            "WHERE id=#{id}")
     @Results(value = {
             @Result(property = "id", column = "id"),
             @Result(property = "customerId", column = "customer_id")
     })
     Account getAccount(@Param("id") UUID id);
 
-    @Insert("INSERT INTO account (id, customer_id, country) VALUES (#{id}, #{customerId}, #{country})")
+    @Insert("INSERT INTO account " +
+            "(id, customer_id, country) " +
+            "VALUES (#{id}, #{customerId}, #{country})")
     void insert(Account account);
 
 }
