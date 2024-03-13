@@ -95,7 +95,7 @@ public abstract class IntegrationTestBase {
                 .build();
 
         return mockMvc.perform(
-                post("/v1/account/" + accountId.toString() + "/transactions")
+                post("/v1/accounts/" + accountId.toString() + "/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)));
     }
@@ -112,7 +112,7 @@ public abstract class IntegrationTestBase {
 
     ResultActions getTransactions(UUID accountId) throws Exception {
         return mockMvc.perform(
-                get("/v1/account/" + accountId + "/transactions")
+                get("/v1/accounts/" + accountId + "/transactions")
                         .contentType(MediaType.APPLICATION_JSON));
     }
 }

@@ -8,8 +8,11 @@ import com.tuum.account.dto.CreateTransactionRequest;
 import com.tuum.account.dto.TransactionResult;
 import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.exception.BadRequestException;
-import com.tuum.account.mapper.TransactionMapper;
+import com.tuum.account.dao.TransactionDao;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +24,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionService {
 
-    private final TransactionMapper transactionMapper;
+    private final TransactionDao transactionDao;
     private final BalanceService balanceService;
     private final AccountService accountService;
 
     @Transactional
+    @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     public TransactionResult createTransaction(UUID accountId, CreateTransactionRequest request) {
         Account account = accountService.getAccount(accountId);
         Balance balance = balanceService.getBalanceByAccountIdAndCurrency(account.getId(), request.currency());
@@ -33,11 +37,11 @@ public class TransactionService {
         validateTransactionAmount(request.amount());
         validateSufficientFunds(balance, request.amount(), request.direction());
 
-        BigDecimal newBalance = calculateNewBalance(balance, request.amount(), request.direction());
-        updateBalance(balance, newBalance);
-
         Transaction transaction = composeTransaction(accountId, request);
         insertTransaction(transaction);
+
+        BigDecimal newBalance = calculateNewBalance(balance, request.amount(), request.direction());
+        updateBalance(balance, newBalance);
 
         return buildTransactionResult(request, accountId, newBalance, transaction.getId());
     }
@@ -45,7 +49,7 @@ public class TransactionService {
     public List<Transaction> getTransactions(UUID accountId) {
         Account account = accountService.getAccount(accountId);
 
-        return transactionMapper.getTransactionsByAccountId(account.getId());
+        return transactionDao.getTransactionsByAccountId(account.getId());
     }
 
     private void validateTransactionAmount(BigDecimal amount) {
@@ -93,7 +97,7 @@ public class TransactionService {
     }
 
     private void insertTransaction(Transaction transaction) {
-        transactionMapper.insert(transaction);
+        transactionDao.insert(transaction);
     }
 
     private TransactionResult buildTransactionResult(CreateTransactionRequest request, UUID accountId, BigDecimal newBalance, UUID transactionId) {

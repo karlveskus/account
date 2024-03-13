@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.tuum.account.mapper")
+@MapperScan("com.tuum.account.dao")
 public class AccountApplication {
 
     public static void main(String[] args) {

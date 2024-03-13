@@ -1,4 +1,4 @@
-package com.tuum.account.mapper;
+package com.tuum.account.dao;
 
 import com.tuum.account.domain.Account;
 import org.apache.ibatis.annotations.*;
@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.*;
 import java.util.UUID;
 
 @Mapper
-public interface AccountMapper {
+public interface AccountDao {
 
     @Select("SELECT id, customer_id " +
             "FROM account " +

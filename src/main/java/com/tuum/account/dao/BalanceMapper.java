@@ -1,4 +1,4 @@
-package com.tuum.account.mapper;
+package com.tuum.account.dao;
 
 import com.tuum.account.domain.Balance;
 import org.apache.ibatis.annotations.*;
@@ -9,7 +9,7 @@ import java.util.UUID;
 @Mapper
 public interface BalanceMapper {
 
-    @Select("SELECT id, account_id, available_amount_cents, currency_code " +
+    @Select("SELECT id, version, account_id, available_amount_cents, currency_code " +
             "FROM balance " +
             "WHERE account_id=#{accountId}")
     @Results(value = {
@@ -20,7 +20,7 @@ public interface BalanceMapper {
     })
     List<Balance> getBalancesByAccountId(@Param("accountId") UUID accountId);
 
-    @Select("SELECT id, account_id, available_amount_cents, currency_code " +
+    @Select("SELECT id, version, account_id, available_amount_cents, currency_code " +
             "FROM balance " +
             "WHERE account_id=#{accountId} AND currency_code=#{currencyCode}")
     @Results(value = {
@@ -32,13 +32,13 @@ public interface BalanceMapper {
     Balance getBalanceByAccountIdAndCurrency(@Param("accountId") UUID accountId, @Param("currencyCode") String currencyCode);
 
     @Insert("INSERT INTO balance " +
-            "(id, account_id, available_amount_cents, currency_code) " +
-            "VALUES (#{id}, #{accountId}, #{availableAmountCents}, #{currencyCode})")
+            "(id, version, account_id, available_amount_cents, currency_code) " +
+            "VALUES (#{id}, #{version}, #{accountId}, #{availableAmountCents}, #{currencyCode})")
     void insert(Balance balance);
 
     @Update("UPDATE balance " +
-            "SET available_amount_cents = #{availableAmountCents}, updated_at = CURRENT_TIMESTAMP " +
-            "WHERE id = #{id}")
-    void update(Balance balance);
+            "SET available_amount_cents = #{availableAmountCents}, updated_at = CURRENT_TIMESTAMP, version = version + 1 " +
+            "WHERE id = #{id} AND version = #{version}")
+    int update(Balance balance);
 
 }

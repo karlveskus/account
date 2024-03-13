@@ -27,6 +27,8 @@ dependencies {
     implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3")
     implementation("org.flywaydb:flyway-core:10.9.1")
     implementation("org.flywaydb:flyway-database-postgresql:10.9.1")
+    implementation("org.springframework.retry:spring-retry:2.0.5")
+    implementation("org.springframework:spring-aspects:6.1.4")
     compileOnly("org.projectlombok:lombok:1.18.30")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")

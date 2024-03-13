@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/v1/account/{accountId}/transactions")
+@RequestMapping("/v1/accounts/{accountId}/transactions")
 @RequiredArgsConstructor
 public class TransactionController {
 

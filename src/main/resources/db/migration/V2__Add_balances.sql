@@ -1,5 +1,6 @@
 CREATE TABLE balance (
     id                      uuid                PRIMARY KEY,
+    version                 BIGINT              NOT NULL,
     created_at              TIMESTAMPTZ         NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMPTZ         NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     account_id              uuid                REFERENCES account(id),

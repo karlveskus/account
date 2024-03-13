@@ -5,7 +5,7 @@ import com.tuum.account.domain.Balance;
 import com.tuum.account.dto.CreateAccountRequest;
 import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.exception.NotFoundException;
-import com.tuum.account.mapper.AccountMapper;
+import com.tuum.account.dao.AccountDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +17,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AccountService {
 
-    private final AccountMapper accountMapper;
+    private final AccountDao accountDao;
     private final BalanceService balanceService;
 
     @Transactional
     public Account createAccount(CreateAccountRequest createAccountRequest) {
         Account account = composeAccount(createAccountRequest);
 
-        accountMapper.insert(account);
+        accountDao.insert(account);
 
         List<Balance> balances = balanceService.initializeBalances(account.getId(), createAccountRequest.currencies());
 
@@ -34,7 +34,7 @@ public class AccountService {
     }
 
     public Account getAccount(UUID id) {
-        Account account = accountMapper.getAccount(id);
+        Account account = accountDao.getAccount(id);
 
         if (account == null) {
             throw new NotFoundException(ErrorCode.ACCOUNT_NOT_FOUND, "Account not found");

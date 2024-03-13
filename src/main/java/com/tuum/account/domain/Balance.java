@@ -17,6 +17,8 @@ public class Balance {
     @Builder.Default
     private UUID id = UUID.randomUUID();
 
+    private int version = 0;
+
     private UUID accountId;
 
     private Long availableAmountCents;

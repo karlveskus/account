@@ -1,12 +1,14 @@
 package com.tuum.account.service;
 
+import com.tuum.account.dao.BalanceDao;
 import com.tuum.account.domain.Balance;
 import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.exception.BadRequestException;
 import com.tuum.account.exception.NotFoundException;
-import com.tuum.account.mapper.BalanceMapper;
+import com.tuum.account.dao.BalanceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,13 +25,13 @@ public class BalanceService {
     @Value("#{'${currencies.enabled}'.split(',')}")
     private List<String> enabledCurrencies;
 
-    private final BalanceMapper balanceMapper;
+    private final BalanceDao balanceDao;
 
     public Balance initializeBalance(UUID accountId, String currencyCode) {
         validateCurrency(currencyCode);
 
         Balance balance = composeInitialBalance(accountId, currencyCode);
-        balanceMapper.insert(balance);
+        balanceDao.insert(balance);
 
         return balance;
     }
@@ -41,13 +43,13 @@ public class BalanceService {
     }
 
     public List<Balance> getBalancesByAccountId(UUID accountId) {
-        return balanceMapper.getBalancesByAccountId(accountId);
+        return balanceDao.getBalancesByAccountId(accountId);
     }
 
     public Balance getBalanceByAccountIdAndCurrency(UUID accountId, String currency) {
         validateCurrency(currency);
 
-        Balance balance = balanceMapper.getBalanceByAccountIdAndCurrency(accountId, currency);
+        Balance balance = balanceDao.getBalanceByAccountIdAndCurrency(accountId, currency);
 
         if (balance == null) {
             throw new NotFoundException(ErrorCode.BALANCE_NOT_FOUND, "Account " + accountId + " has no balance with currency " + currency);
@@ -57,7 +59,7 @@ public class BalanceService {
     }
 
     public void updateBalance(Balance balance) {
-        balanceMapper.update(balance);
+        balanceDao.update(balance);
     }
 
     private void validateCurrency(String currencyCode) {

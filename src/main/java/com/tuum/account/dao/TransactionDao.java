@@ -1,4 +1,4 @@
-package com.tuum.account.mapper;
+package com.tuum.account.dao;
 
 import com.tuum.account.domain.Transaction;
 import org.apache.ibatis.annotations.*;
@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Mapper
-public interface TransactionMapper {
+public interface TransactionDao {
 
     @Insert("INSERT INTO transaction " +
             "(id, account_id, amount_cents, currency_code, direction, description) " +
