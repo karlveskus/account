@@ -1,4 +1,4 @@
-package com.tuum.account.messaging.event;
+package com.tuum.account.event;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -8,9 +8,7 @@ import java.util.UUID;
 
 @Builder
 @Getter
-public class BalanceCreated extends TuumEvent {
+public class BalanceUpdated extends TuumEvent {
     private UUID id;
-    private UUID accountId;
     private BigDecimal amount;
-    private String currencyCode;
 }

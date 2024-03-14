@@ -1,20 +1,25 @@
 package com.tuum.account.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.account.domain.Account;
 import com.tuum.account.domain.Balance;
 import com.tuum.account.dto.TransactionResult;
-import com.tuum.account.messaging.EventPublisher;
-import com.tuum.account.messaging.event.*;
+import com.tuum.account.event.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.Exchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class EventPublisherService {
 
-    private final List<EventPublisher> eventPublishers;
+    private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
+    private final Exchange accountExchange;
+    private final Exchange balanceExchange;
+    private final Exchange transactionExchange;
 
     public void publishAccountCreated(Account account) {
         AccountCreated accountCreated = AccountCreated.builder()
@@ -23,7 +28,7 @@ public class EventPublisherService {
                 .country(account.getCountry())
                 .build();
 
-        publish(accountCreated);
+        publish(accountExchange, accountCreated);
     }
 
     public void publishBalanceCreated(Balance balance) {
@@ -34,7 +39,7 @@ public class EventPublisherService {
                 .currencyCode(balance.getCurrencyCode())
                 .build();
 
-        publish(balanceCreated);
+        publish(balanceExchange, balanceCreated);
     }
 
     public void publishBalanceUpdated(TransactionResult transactionResult) {
@@ -43,7 +48,7 @@ public class EventPublisherService {
                 .amount(transactionResult.newBalance())
                 .build();
 
-        publish(balanceUpdated);
+        publish(balanceExchange, balanceUpdated);
 
     }
 
@@ -59,18 +64,14 @@ public class EventPublisherService {
                 .newBalance(transactionResult.newBalance())
                 .build();
 
-        publish(balanceUpdated);
+        publish(transactionExchange, balanceUpdated);
     }
 
-    public void publish(TuumEvent event) {
-        List<EventPublisher> publishers = eventPublishers.stream()
-                .filter(eventPublisher -> eventPublisher.getTypesToPublish().contains(event.getClass()))
-                .toList();
-
-        if (publishers.isEmpty()) throw new RuntimeException("No handler found for " + event);
-
-        for (EventPublisher publisher : publishers) {
-            publisher.publish(event);
+    public void publish(Exchange exchange, TuumEvent event) {
+        try {
+            rabbitTemplate.convertAndSend(exchange.getName(), "", objectMapper.writeValueAsString(event));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 

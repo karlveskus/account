@@ -1,4 +1,4 @@
-package com.tuum.account.messaging.event;
+package com.tuum.account.event;
 
 import lombok.Builder;
 import lombok.Getter;

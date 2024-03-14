@@ -1,4 +1,4 @@
-package com.tuum.account.messaging.event;
+package com.tuum.account.event;
 
 import com.tuum.account.domain.TransactionDirection;
 import lombok.Builder;

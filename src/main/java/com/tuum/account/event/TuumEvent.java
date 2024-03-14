@@ -1,4 +1,4 @@
-package com.tuum.account.messaging.event;
+package com.tuum.account.event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
