@@ -18,7 +18,6 @@ public class BalanceDao {
         return balanceMapper.getBalancesByAccountId(accountId);
     }
 
-
     public Balance getBalanceByAccountIdAndCurrency(UUID accountId, String currencyCode) {
         return balanceMapper.getBalanceByAccountIdAndCurrency(accountId, currencyCode);
     }

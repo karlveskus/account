@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class AccountControllerTest extends IntegrationTestBase {
@@ -32,6 +36,9 @@ public class AccountControllerTest extends IntegrationTestBase {
                 Tuple.tuple("EUR", BigDecimal.valueOf(0, 2)),
                 Tuple.tuple("USD", BigDecimal.valueOf(0, 2))
         );
+
+        verify(rabbitTemplate, times(1)).convertAndSend(eq(accountExchange.getName()), anyString(), anyString());
+        verify(rabbitTemplate, times(currencies.size())).convertAndSend(eq(balanceExchange.getName()), anyString(), anyString());
     }
 
     @Test

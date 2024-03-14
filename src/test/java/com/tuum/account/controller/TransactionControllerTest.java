@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class TransactionControllerTest extends IntegrationTestBase {
@@ -22,6 +25,8 @@ public class TransactionControllerTest extends IntegrationTestBase {
         BigDecimal amountIn = BigDecimal.valueOf(12.34);
         BigDecimal amountOut = BigDecimal.valueOf(3.14);
         String currency = "EUR";
+
+        reset(rabbitTemplate);
 
         createTransactionAndReturn(
                 accountDto.id().toString(),
@@ -43,6 +48,9 @@ public class TransactionControllerTest extends IntegrationTestBase {
         assertThat(transactionResult.direction()).isEqualTo(TransactionDirection.OUT);
         assertThat(transactionResult.description()).isEqualTo("Pizza");
         assertThat(transactionResult.newBalance()).isEqualTo(amountIn.subtract(amountOut));
+
+        verify(rabbitTemplate, times(2)).convertAndSend(eq(balanceExchange.getName()), anyString(), anyString());
+        verify(rabbitTemplate, times(2)).convertAndSend(eq(transactionExchange.getName()), anyString(), anyString());
     }
 
     @Test

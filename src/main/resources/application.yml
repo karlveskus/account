@@ -2,7 +2,7 @@ spring:
   jackson:
     default-property-inclusion: non_null
   datasource:
-    url: jdbc:postgresql://localhost:5432/account
+    url: jdbc:postgresql://postgres:5432/account
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -22,13 +22,23 @@ spring:
         cache.use_second_level_cache: false
         cache.use_query_cache: false
         generate_statistics: false
-
   flyway:
     url: ${spring.datasource.url}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     enabled: true
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: rabbitmq
+    password: rabbitmq
 
 mybatis.type-handlers-package: com.tuum.account.typehandler
 
 currencies.enabled: EUR,SEK,GBP,USD
+
+rabbitmq:
+  exchanges:
+    account: account.account
+    balance: account.balance
+    transaction: account.transaction

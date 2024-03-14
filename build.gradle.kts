@@ -29,6 +29,8 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql:10.9.1")
     implementation("org.springframework.retry:spring-retry:2.0.5")
     implementation("org.springframework:spring-aspects:6.1.4")
+    implementation("org.springframework.boot:spring-boot-starter-amqp:3.2.3")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.16.2")
     compileOnly("org.projectlombok:lombok:1.18.30")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")

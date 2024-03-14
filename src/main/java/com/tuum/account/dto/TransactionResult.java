@@ -8,6 +8,7 @@ import java.util.UUID;
 
 @Builder
 public record TransactionResult(
+        UUID balanceId,
         UUID accountId,
         UUID transactionID,
         BigDecimal amount,

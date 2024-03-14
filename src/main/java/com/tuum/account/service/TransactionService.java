@@ -1,5 +1,6 @@
 package com.tuum.account.service;
 
+import com.tuum.account.dao.TransactionDao;
 import com.tuum.account.domain.Account;
 import com.tuum.account.domain.Balance;
 import com.tuum.account.domain.Transaction;
@@ -8,13 +9,11 @@ import com.tuum.account.dto.CreateTransactionRequest;
 import com.tuum.account.dto.TransactionResult;
 import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.exception.BadRequestException;
-import com.tuum.account.dao.TransactionDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,23 +26,32 @@ public class TransactionService {
     private final TransactionDao transactionDao;
     private final BalanceService balanceService;
     private final AccountService accountService;
+    private final TransactionRunner transactionRunner;
+    private final EventPublisherService eventPublisherService;
 
-    @Transactional
     @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     public TransactionResult createTransaction(UUID accountId, CreateTransactionRequest request) {
-        Account account = accountService.getAccount(accountId);
-        Balance balance = balanceService.getBalanceByAccountIdAndCurrency(account.getId(), request.currency());
 
-        validateTransactionAmount(request.amount());
-        validateSufficientFunds(balance, request.amount(), request.direction());
+        TransactionResult transactionResult = transactionRunner.runInTransaction(() -> {
+            Account account = accountService.getAccount(accountId);
+            Balance balance = balanceService.getBalanceByAccountIdAndCurrency(account.getId(), request.currency());
 
-        Transaction transaction = composeTransaction(accountId, request);
-        insertTransaction(transaction);
+            validateTransactionAmount(request.amount());
+            validateSufficientFunds(balance, request.amount(), request.direction());
 
-        BigDecimal newBalance = calculateNewBalance(balance, request.amount(), request.direction());
-        updateBalance(balance, newBalance);
+            Transaction transaction = composeTransaction(accountId, request);
+            insertTransaction(transaction);
 
-        return buildTransactionResult(request, accountId, newBalance, transaction.getId());
+            BigDecimal newBalance = calculateNewBalance(balance, request.amount(), request.direction());
+            updateBalance(balance, newBalance);
+
+            return buildTransactionResult(request, accountId, balance, transaction.getId());
+        });
+
+        eventPublisherService.publishTransactionCreated(transactionResult);
+        eventPublisherService.publishBalanceUpdated(transactionResult);
+
+        return transactionResult;
     }
 
     public List<Transaction> getTransactions(UUID accountId) {
@@ -100,15 +108,16 @@ public class TransactionService {
         transactionDao.insert(transaction);
     }
 
-    private TransactionResult buildTransactionResult(CreateTransactionRequest request, UUID accountId, BigDecimal newBalance, UUID transactionId) {
+    private TransactionResult buildTransactionResult(CreateTransactionRequest request, UUID accountId, Balance balance, UUID transactionId) {
         return TransactionResult.builder()
+                .balanceId(balance.getId())
                 .accountId(accountId)
                 .transactionID(transactionId)
                 .amount(request.amount())
                 .currency(request.currency())
                 .direction(request.direction())
                 .description(request.description())
-                .newBalance(newBalance)
+                .newBalance(balance.getAvailableAmount())
                 .build();
     }
 }

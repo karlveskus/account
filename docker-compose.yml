@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  service:
+    build:
+      context: .
+    ports:
+      - '8080:8080'
+    depends_on:
+      - postgres
+      - rabbitmq
+
   postgres:
     image: postgres:16
     environment:
@@ -12,5 +21,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+    restart: always
+
 volumes:
   postgres_data:
+  rabbitmq_data:

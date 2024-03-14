@@ -1,11 +1,11 @@
 package com.tuum.account.service;
 
+import com.tuum.account.dao.AccountDao;
 import com.tuum.account.domain.Account;
 import com.tuum.account.domain.Balance;
 import com.tuum.account.dto.CreateAccountRequest;
 import com.tuum.account.dto.enumeration.ErrorCode;
 import com.tuum.account.exception.NotFoundException;
-import com.tuum.account.dao.AccountDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,16 +19,28 @@ public class AccountService {
 
     private final AccountDao accountDao;
     private final BalanceService balanceService;
+    private final EventPublisherService eventPublisherService;
+    private final TransactionRunner transactionRunner;
 
     @Transactional
     public Account createAccount(CreateAccountRequest createAccountRequest) {
-        Account account = composeAccount(createAccountRequest);
+        Account account = transactionRunner.runInTransaction(() -> {
+            Account newAccount = composeAccount(createAccountRequest);
 
-        accountDao.insert(account);
+            accountDao.insert(newAccount);
 
-        List<Balance> balances = balanceService.initializeBalances(account.getId(), createAccountRequest.currencies());
+            List<Balance> balances = balanceService.initializeBalances(newAccount.getId(), createAccountRequest.currencies());
 
-        account.setBalances(balances);
+            newAccount.setBalances(balances);
+
+            return newAccount;
+        });
+
+        eventPublisherService.publishAccountCreated(account);
+
+        for (Balance balance : account.getBalances()) {
+            eventPublisherService.publishBalanceCreated(balance);
+        }
 
         return account;
     }
